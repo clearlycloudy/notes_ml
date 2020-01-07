@@ -242,7 +242,55 @@
                         &= Var(\frac{1}{n^{0.5}} w_i) Var(x_i)\\
     \hat{w}_i &= \frac{1}{n^{0.5}}
   \end{align*}
-  
+
+  \pagebreak
+
+\item Convolution
+
+  % \Derivation:
+Forward Pass:
+\begin{verbatim}
+    N, C, H, W = x.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    F, _, HH, WW = w.shape
+    H_prime = int(1 + (H + 2 * pad - HH) / stride)
+    W_prime = int(1 + (W + 2 * pad - WW) / stride)
+    out = np.zeros((N, F, H_prime, W_prime))
+
+    import itertools
+    # for i, f, hh, ww in itertools.product(
+    #     range(N), range(F), range(H_prime), range(W_prime)):
+    #         out[i, f, hh, ww] = np.sum(w[f, :]
+    #             * x_pad[i, :, stride*hh:stride*hh+HH, stride*ww:stride*ww+WW]) 
+    #             + b[f]
+    # partially vectorized for i
+    # for f, hh, ww in itertools.product(
+    #     range(F), range(H_prime), range(W_prime)):
+    #         out[:, f, hh, ww] = np.sum(w[f, :] 
+    #             * x_pad[:, :, stride*hh:stride*hh+HH, stride*ww:stride*ww+WW],
+    #                  axis=(1,2,3))
+    #             + b[f]
+    # partially vectorized for f
+    # for i, hh, ww in itertools.product(
+    #     range(N), range(H_prime), range(W_prime)):
+    #         out[i, :, hh, ww] = np.sum(w[:, :] 
+    #             * x_pad[i, :, stride*hh:stride*hh+HH, stride*ww:stride*ww+WW],
+    #                 axis=(1,2,3))
+    #             + b[:]
+    # partially vectorized for i, f
+    for hh, ww in itertools.product(range(H_prime), range(W_prime)):
+        #expand w to (1,F,C,WW,HH)
+        #expand x_pad to (N,1,C,W,H)
+        #contraction along axis: C,W(local),H(local)
+        #output axis: N,F,W_prime,H_prime
+        out[:, :, hh, ww] = np.sum( np.expand_dims(w,axis=0) *
+            np.expand_dims(x_pad[:, :, 
+                           stride*hh:stride*hh+HH, 
+                           stride*ww:stride*ww+WW],
+                           axis=1), axis=(2,3,4))
+            + b[:]
+\end{verbatim}
 \end{enumerate}
 
 \end {document}
