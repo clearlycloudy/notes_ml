@@ -408,6 +408,28 @@
                            axis=1), axis=(2,3,4))
             + b[:]
 \end{verbatim}
+
+
+\item Fully vectorized convolution in Numpy using subwindow trick:
+
+\begin{verbatim}
+
+def convolve3d(img, kernel):
+    # calc the size of the array of submatracies
+    sub_shape = tuple(np.subtract(img.shape, kernel.shape) + 1)
+
+    strd = np.lib.stride_tricks.as_strided
+
+    # make an array of submatracies
+    submatrices = strd(img,kernel.shape + sub_shape,img.strides * 2)
+
+    # sum the submatraces and kernel
+    convolved_matrix = np.einsum('hij,hijklm->klm', kernel, submatrices)
+
+    return convolved_matrix
+
+\end{verbatim}
+  
 \end{enumerate}
 
 \end {document}
